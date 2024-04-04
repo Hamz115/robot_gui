@@ -106,6 +106,14 @@ void CVUIROSCmdVelPublisher::updateControls(cv::Mat& frame) {
       twist_msg_.linear.x = twist_msg_.linear.x - linear_velocity_step_;
       twist_pub_.publish(twist_msg_);
     }
+    
+    cvui::window(frame, 30, 400, 120, 40, "Linear velocity:");
+    cvui::printf(frame, 55, 425, 0.4, 0xff0000, "%.02f m/sec",
+                 twist_msg_.linear.x);
+
+    cvui::window(frame, 150, 400, 120, 40, "Angular velocity:"); 
+    cvui::printf(frame, 175, 425, 0.4, 0xff0000, "%.02f rad/sec",
+                 twist_msg_.angular.z);
 
     
 }

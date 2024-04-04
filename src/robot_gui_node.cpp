@@ -2,6 +2,7 @@
 #include <std_msgs/String.h>
 #include "robot_gui/robot_gui.h"
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include "robotinfo_msgs/RobotInfo10Fields.h" 
 #include <opencv2/opencv.hpp>
 
@@ -15,11 +16,12 @@ int main(int argc, char **argv) {
         ROS_ERROR("roscore is not running!");
         return -1;
     }
+    CVUIROSCmdVelPublisher teleop_gui;
 
     ros::NodeHandle nh;
-    cv::Mat frame = cv::Mat(600, 400, CV_8UC3);
+
+    cv::Mat frame = cv::Mat(600, 300, CV_8UC3);
     cv::namedWindow(WINDOW_NAME);
-    CVUIROSCmdVelPublisher teleop_gui;
     cvui::init(WINDOW_NAME);
     
     ros::Subscriber sub = nh.subscribe("robot_info", 1000, robotInfoCallback);
@@ -29,7 +31,7 @@ int main(int argc, char **argv) {
         frame = cv::Scalar(49, 52, 49); 
         drawTable(frame, info_message);;
 
-        teleop_gui.updateControls(frame);
+        teleop_gui.updateGUI(frame);
 
         
         cvui::update();

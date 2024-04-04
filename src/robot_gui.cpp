@@ -2,6 +2,7 @@
 #include <std_msgs/String.h>
 #include "robot_gui/robot_gui.h"
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include "robotinfo_msgs/RobotInfo10Fields.h" 
 #include <opencv2/opencv.hpp>
 
@@ -71,10 +72,14 @@ CVUIROSCmdVelPublisher::CVUIROSCmdVelPublisher()
 : linear_velocity_step_(0.1), angular_velocity_step_(0.1), window_name_("CVUI ROS TELEOP") {
   ros::NodeHandle nh;
   twist_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-  
+  odom_sub_ = nh_.subscribe("/odom", 10, &CVUIROSCmdVelPublisher::odomCallback, this);
 }
 
-void CVUIROSCmdVelPublisher::updateControls(cv::Mat& frame) {
+void CVUIROSCmdVelPublisher::odomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+    current_odom_ = *msg; // Update the current odometry
+}
+
+void CVUIROSCmdVelPublisher::updateGUI(cv::Mat& frame) {
      
   if (cvui::button(frame, 100, 300, "Forward")) {
         this->twist_msg_.linear.x += this->linear_velocity_step_;
@@ -115,5 +120,19 @@ void CVUIROSCmdVelPublisher::updateControls(cv::Mat& frame) {
     cvui::printf(frame, 175, 425, 0.4, 0xff0000, "%.02f rad/sec",
                  twist_msg_.angular.z);
 
+    // Display odometry information
+    // cv::Point startPos(10, 520); // Adjust as needed
+    std::string posX = "X: " + std::to_string(current_odom_.pose.pose.position.x);
+    std::string posY = "Y: " + std::to_string(current_odom_.pose.pose.position.y);
+    std::string posZ = "Z: " + std::to_string(current_odom_.pose.pose.position.z);
+
     
+    cvui::text(frame, 75, 450, posX, 0.6, 0xffffff);
+   
+    cvui::text(frame, 75, 475, posY, 0.6, 0xffffff);
+    
+    cvui::text(frame, 75, 500, posZ, 0.6, 0xffffff);             
+
 }
+
+

@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include <std_msgs/String.h>
 #include "robot_gui/robot_gui.h"
+#include <geometry_msgs/Twist.h>
 #include "robotinfo_msgs/RobotInfo10Fields.h" 
 #include <opencv2/opencv.hpp>
 
@@ -64,4 +65,47 @@ void robotInfoCallback(const robotinfo_msgs::RobotInfo10Fields::ConstPtr& msg) {
 
         y += 30;
      }
+}
+
+CVUIROSCmdVelPublisher::CVUIROSCmdVelPublisher()
+: linear_velocity_step_(0.1), angular_velocity_step_(0.1), window_name_("CVUI ROS TELEOP") {
+  ros::NodeHandle nh;
+  twist_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+  
+}
+
+void CVUIROSCmdVelPublisher::updateControls(cv::Mat& frame) {
+     
+  if (cvui::button(frame, 100, 300, "Forward")) {
+        this->twist_msg_.linear.x += this->linear_velocity_step_;
+        this->twist_pub_.publish(this->twist_msg_);
+    }
+    
+    if (cvui::button(frame, 100, 300, " Forward ")) {
+      twist_msg_.linear.x = twist_msg_.linear.x + linear_velocity_step_;
+      twist_pub_.publish(twist_msg_);
+    }
+
+    if (cvui::button(frame, 100, 330, "   Stop  ")) {
+      twist_msg_.linear.x = 0.0;
+      twist_msg_.angular.z = 0.0;
+      twist_pub_.publish(twist_msg_);
+    }
+
+    if (cvui::button(frame, 30, 330, " Left ")) {
+      twist_msg_.angular.z = twist_msg_.angular.z + angular_velocity_step_;
+      twist_pub_.publish(twist_msg_);
+    }
+
+    if (cvui::button(frame, 195, 330, " Right ")) {
+      twist_msg_.angular.z = twist_msg_.angular.z - angular_velocity_step_;
+      twist_pub_.publish(twist_msg_);
+    }
+
+    if (cvui::button(frame, 100, 360, "Backward")) {
+      twist_msg_.linear.x = twist_msg_.linear.x - linear_velocity_step_;
+      twist_pub_.publish(twist_msg_);
+    }
+
+    
 }

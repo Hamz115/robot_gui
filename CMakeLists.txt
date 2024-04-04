@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   robotinfo_msgs
   roscpp
   std_srvs
+  cv_bridge
+  image_transport
 )
 
 find_package(OpenCV 4 REQUIRED)
@@ -71,10 +73,10 @@ find_package(OpenCV 4 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   nav_msgs#   robotinfo_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   geometry_msgs   nav_msgs   robotinfo_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

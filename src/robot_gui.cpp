@@ -3,6 +3,7 @@
 #include "robot_gui/robot_gui.h"
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include "std_srvs/Trigger.h"
 #include "robotinfo_msgs/RobotInfo10Fields.h" 
 #include <opencv2/opencv.hpp>
 
@@ -73,11 +74,24 @@ CVUIROSCmdVelPublisher::CVUIROSCmdVelPublisher()
   ros::NodeHandle nh;
   twist_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
   odom_sub_ = nh_.subscribe("/odom", 10, &CVUIROSCmdVelPublisher::odomCallback, this);
+  distance_client_ = nh.serviceClient<std_srvs::Trigger>("/get_distance");
 }
 
 void CVUIROSCmdVelPublisher::odomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
     current_odom_ = *msg; // Update the current odometry
 }
+
+bool CVUIROSCmdVelPublisher::getDistance() {
+    std_srvs::Trigger srv;
+    if (distance_client_.call(srv)) {
+        distance_travelled_ = srv.response.message; // Assume this is the correct field
+        return true; // Indicate the service call was successful
+    } else {
+        distance_travelled_ = "Service call failed";
+        return false; // Indicate the service call failed
+    }
+}
+
 
 void CVUIROSCmdVelPublisher::updateGUI(cv::Mat& frame) {
      
@@ -112,26 +126,43 @@ void CVUIROSCmdVelPublisher::updateGUI(cv::Mat& frame) {
       twist_pub_.publish(twist_msg_);
     }
     
-    cvui::window(frame, 30, 400, 120, 40, "Linear velocity:");
-    cvui::printf(frame, 55, 425, 0.4, 0xff0000, "%.02f m/sec",
+    cvui::window(frame, 30, 385, 120, 40, "Linear velocity:");
+    cvui::printf(frame, 55, 410, 0.4, 0xff0000, "%.02f m/sec",
                  twist_msg_.linear.x);
 
-    cvui::window(frame, 150, 400, 120, 40, "Angular velocity:"); 
-    cvui::printf(frame, 175, 425, 0.4, 0xff0000, "%.02f rad/sec",
+    cvui::window(frame, 150, 385, 120, 40, "Angular velocity:"); 
+    cvui::printf(frame, 175, 410, 0.4, 0xff0000, "%.02f rad/sec",
                  twist_msg_.angular.z);
 
     // Display odometry information
     // cv::Point startPos(10, 520); // Adjust as needed
-    std::string posX = "X: " + std::to_string(current_odom_.pose.pose.position.x);
-    std::string posY = "Y: " + std::to_string(current_odom_.pose.pose.position.y);
-    std::string posZ = "Z: " + std::to_string(current_odom_.pose.pose.position.z);
+    cvui::text(frame, 15, 435, "Estimated robot position off odemtry", 0.4, 0xffffff); 
+    cvui::rect(frame, 14, 450, 100, 60, 0x000000);
+    cvui::window(frame, 15, 450, 100, 20, "X"); 
+    std::string posX = std::to_string(current_odom_.pose.pose.position.x);
+    cvui::rect(frame, 116, 450, 100, 60, 0x000000);
+    cvui::window(frame, 115, 450, 100, 20, "Y"); 
+    std::string posY = std::to_string(current_odom_.pose.pose.position.y);
+    cvui::rect(frame, 216, 450, 100, 60, 0x000000);
+    cvui::window(frame, 215, 450, 100, 20, "Z"); 
+    std::string posZ = std::to_string(current_odom_.pose.pose.position.z);
 
     
-    cvui::text(frame, 75, 450, posX, 0.6, 0xffffff);
+    cvui::text(frame, 20, 480, posX, 0.6, 0xffffff);
    
-    cvui::text(frame, 75, 475, posY, 0.6, 0xffffff);
+    cvui::text(frame, 120, 480, posY, 0.6, 0xffffff);
     
-    cvui::text(frame, 75, 500, posZ, 0.6, 0xffffff);             
+    cvui::text(frame, 220, 480, posZ, 0.6, 0xffffff);  
+
+    cvui::text(frame, 15, 515, "Distance travelled", 0.4, 0xffffff); 
+    if (cvui::button(frame, 30, 535, 75, 75, "Call")) { // adjust x_position and y_position as needed
+        getDistance();
+    }
+
+    // Text field to show the distance
+    cvui::rect(frame, 115, 530, 175, 80, 0x000000);
+    cvui::text(frame, 123, 535, "Distance in meters:", 0.5); // adjust x_position_text and y_position_text as needed
+    cvui::text(frame, 123, 565, distance_travelled_.c_str(), 0.8);
 
 }
 
